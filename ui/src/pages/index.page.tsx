@@ -79,7 +79,7 @@ export default function Home() {
         setDisplayText('zkApp compiled...');
 
         const zkappPublicKey = PublicKey.fromBase58(
-          'B62qoRKBfp77akXEhLN4d32ufPFbpnThJ3cd67Y54izRBv9ukaTWkzP'
+          'B62qppTiiDkw53bewfqwnxGVzH2xW6oGTzGxBouUxeXWVdVTWVkB2rF' //berkeley9
         );
 
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
@@ -165,12 +165,16 @@ export default function Home() {
       publicKey: state.publicKey!,
     });
 
-    await state.zkappWorkerClient!.createVerifyTransaction(nftHash, endorserHash, signature);
+    // await state.zkappWorkerClient!.createVerifyTransaction(nftHash, endorserHash, signature);
+
+    await state.zkappWorkerClient!.createUpdateNftHashTransaction();
 
     setDisplayText('Creating proof...');
     console.log('Creating proof...');
-    await state.zkappWorkerClient!.proveVerifyTransaction();
+    // await state.zkappWorkerClient!.proveVerifyTransaction();
+    await state.zkappWorkerClient!.proveUpdateNftHashTransaction();
 
+    
     console.log('Requesting send transaction...');
     setDisplayText('Requesting send transaction...');
     const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();

@@ -21,6 +21,7 @@ const ORACLE_PRIVATE_KEY =
   'EKFFxwgToyjnBTCKs5p8f2v2XnmS86yJJ4yso3iR5WZ97F7ooSE1';
 const privKey = PrivateKey.fromBase58(ORACLE_PRIVATE_KEY);
 const pubKey = privKey.toPublicKey();
+console.log(`Oracle public key derived from the private key: ${pubKey.toBase58()}`);
 
 // Temporary hardcoded metadata of the NFT we want to endorse
 const nftMetadata =
@@ -34,7 +35,7 @@ const nftHash = Poseidon.hash(nftHashCS.toFields());
 const endorserCS = CircuitString.fromString(endorserUsername);
 const endorserHash = Poseidon.hash(endorserCS.toFields());
 
-let proofsEnabled = false;
+let proofsEnabled = true;
 function createLocalBlockchain() {
   const Local = Mina.LocalBlockchain({ proofsEnabled });
   Mina.setActiveInstance(Local);
@@ -50,8 +51,10 @@ async function localDeploy(
     AccountUpdate.fundNewAccount(deployerAccount);
     zkAppInstance.deploy({ zkappKey: zkAppPrivatekey });
     zkAppInstance.init();
-    zkAppInstance.nftHash.set(nftHash);
-    zkAppInstance.endorserHash.set(endorserHash);
+    // zkAppInstance.nftHash.set(nftHash);
+    // zkAppInstance.endorserHash.set(endorserHash);
+    zkAppInstance.setNftHash(nftHash);
+    zkAppInstance.setEndorserHash(endorserHash);
   });
   await txn.prove();
   txn.sign([zkAppPrivatekey]);
@@ -64,8 +67,7 @@ describe('Cpone', () => {
     zkAppPrivateKey: PrivateKey;
 
   beforeAll(async () => {
-    await isReady;
-    if (proofsEnabled) Cpone.compile();
+    await Cpone.compile();
   });
 
   beforeEach(async () => {

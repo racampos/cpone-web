@@ -53,6 +53,24 @@ const functions = {
     const currentValue = await state.zkapp!.isEndorsed.get();
     return JSON.stringify(currentValue.toJSON());
   },
+  createUpdateNftHashTransaction: async (args: {}) => {
+    const transaction = await Mina.transaction(() => {
+      state.zkapp!.setNftHash(Field(20590476033725623984114383506579831719048950061743968044989189467132111909415));
+    });
+    state.transaction = transaction;
+  },
+  proveUpdateNftHashTransaction: async (args: {}) => {
+    await state.transaction!.prove();
+  },
+  createUpdateEndorserHashTransaction: async (args: {}) => {
+    const transaction = await Mina.transaction(() => {
+      state.zkapp!.setNftHash(Field(26648954008517657130692534198215742792916116540943147107938897297516849142696));
+    });
+    state.transaction = transaction;
+  },
+  proveUpdateEndorserHashTransaction: async (args: {}) => {
+    await state.transaction!.prove();
+  },
   createVerifyTransaction: async (args: { nftHash: Field, endorserHash: Field, signature: Signature }) => {
     const transaction = await Mina.transaction(() => {
       state.zkapp!.verify(

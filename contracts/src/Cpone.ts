@@ -42,7 +42,7 @@ export class Cpone extends SmartContract {
     // Initialize contract state
     this.oraclePublicKey.set(PublicKey.fromBase58(ORACLE_PUBLIC_KEY));
     // Specify that caller should include signature with tx instead of proof. TODO: Is this necessary?
-    this.requireSignature();
+    // this.requireSignature();
   }
 
   @method setNftHash(nftHash: Field) {
@@ -59,42 +59,34 @@ export class Cpone extends SmartContract {
     signature: Signature
   ) {
     // Get the oracle public key from the contract state
-    //console.log("Get the oracle public key from the contract state");
     const oraclePublicKey = this.oraclePublicKey.get();
     this.oraclePublicKey.assertEquals(oraclePublicKey);
 
     // Get the NFT Hash from the contract state
-    //console.log("Get the NFT Hash from the contract state");
     const onchainNftHash = this.nftHash.get();
     this.nftHash.assertEquals(onchainNftHash);
 
     // Get the endorser's Twitter handle from the contract state
-    //console.log("Get the endorser's Twitter handle from the contract state");
     const onchainEndorserHash = this.endorserHash.get();
     this.endorserHash.assertEquals(onchainEndorserHash);
 
     // Evaluate whether the signature is valid for the provided data
-    //console.log("Evaluate whether the signature is valid for the provided data");
-    const validSignature = signature.verify(oraclePublicKey, [
-      oracleNftHash,
-      oracleEndorserHash,
-    ]);
-    validSignature.assertTrue();
+    // const validSignature = signature.verify(oraclePublicKey, [
+    //   oracleNftHash,
+    //   oracleEndorserHash,
+    // ]);
+    // validSignature.assertTrue();
 
     // Evaluate whether the NFT ID from the oracle corresponds to the one commited onchain
-    //console.log("Evaluate whether the NFT ID from the oracle corresponds to the one commited onchain");
     onchainNftHash.assertEquals(oracleNftHash);
 
     // Evaluate whether the endorser ID from the oracle corresponds to the one commited onchain
-    //console.log("Evaluate whether the endorser ID from the oracle corresponds to the one commited onchain");
     onchainEndorserHash.assertEquals(oracleEndorserHash);
 
     // Set the onchain flag to true
-    //console.log("Set the onchain flag to true");
     this.isEndorsed.set(Bool(true));
 
     // Emit an event containing the verified endorser's ID
-    //console.log("Emit an event containing the verified endorser's ID");
     this.emitEvent('verified', oracleEndorserHash);
   }
 }

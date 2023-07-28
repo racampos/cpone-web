@@ -58,6 +58,22 @@ export default class ZkappWorkerClient {
     return Bool.fromJSON(JSON.parse(result as string));
   }
 
+  createUpdateNftHashTransaction() {
+    return this._call('createUpdateNftHashTransaction', {});
+  }
+
+  createUpdateEndorserHashTransaction() {
+    return this._call('createUpdateNftHashTransaction', {});
+  }
+
+  proveUpdateNftHashTransaction() {
+    return this._call('proveUpdateEndorserHashTransaction', {});
+  }
+
+  proveUpdateEndorserHashTransaction() {
+    return this._call('proveUpdateEndorserHashTransaction', {});
+  }
+
   createVerifyTransaction(nftHash: Field, endorserHash: Field, signature: Signature) {
     return this._call('createVerifyTransaction', { nftHash, endorserHash, signature });
   }
