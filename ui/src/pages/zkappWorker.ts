@@ -1,4 +1,4 @@
-import { Mina, PublicKey, fetchAccount, Field, Signature } from 'snarkyjs';
+import { Mina, PublicKey, fetchAccount, Field, Signature, Bool } from 'snarkyjs';
 
 type Transaction = Awaited<ReturnType<typeof Mina.transaction>>;
 
@@ -53,39 +53,40 @@ const functions = {
     const currentValue = await state.zkapp!.isEndorsed.get();
     return JSON.stringify(currentValue.toJSON());
   },
-  createUpdateNftHashTransaction: async (args: {}) => {
+  createUpdateHashesTransaction: async (args: { nftHash: string, endorserHash: string }) => {
     const transaction = await Mina.transaction(() => {
-      state.zkapp!.setNftHash(Field(20590476033725623984114383506579831719048950061743968044989189467132111909415));
+      state.zkapp!.setNftHash(Field(args.nftHash));
+      state.zkapp!.setEndorserHash(Field(args.endorserHash));
     });
     state.transaction = transaction;
   },
-  proveUpdateNftHashTransaction: async (args: {}) => {
-    await state.transaction!.prove();
-  },
-  createUpdateEndorserHashTransaction: async (args: {}) => {
-    const transaction = await Mina.transaction(() => {
-      state.zkapp!.setNftHash(Field(26648954008517657130692534198215742792916116540943147107938897297516849142696));
-    });
-    state.transaction = transaction;
-  },
-  proveUpdateEndorserHashTransaction: async (args: {}) => {
-    await state.transaction!.prove();
-  },
-  createVerifyTransaction: async (args: { nftHash: Field, endorserHash: Field, signature: Signature }) => {
+  createVerifyTransaction: async (args: { nftHash: string, endorserHash: string, signature: string }) => {
     const transaction = await Mina.transaction(() => {
       state.zkapp!.verify(
-        args.nftHash,
-        args.endorserHash,
-        args.signature
+        Field(args.nftHash),
+        Field(args.endorserHash),
+        Signature.fromJSON(args.signature)
       );
     });
     state.transaction = transaction;
   },
-  proveVerifyTransaction: async (args: {}) => {
+  // Try to reset the isEndorsed flag back to false. Should fail.
+  createAttemptedUpdateIsEndorsedTransaction: async (args: {}) => {
+    const transaction = await Mina.transaction(() => {
+      state.zkapp!.isEndorsed.set(Bool(false));
+    });
+    state.transaction = transaction;
+  },
+
+  createProveTransaction: async (args: {}) => {
     await state.transaction!.prove();
   },
   getTransactionJSON: async (args: {}) => {
     return state.transaction!.toJSON();
+  },
+  getEvents: async (args: {}) => {
+    const events = await state.zkapp!.fetchEvents();
+    return events;
   },
 };
 

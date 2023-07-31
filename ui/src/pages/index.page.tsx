@@ -79,7 +79,7 @@ export default function Home() {
         setDisplayText('zkApp compiled...');
 
         const zkappPublicKey = PublicKey.fromBase58(
-          'B62qppTiiDkw53bewfqwnxGVzH2xW6oGTzGxBouUxeXWVdVTWVkB2rF' //berkeley9
+          'B62qnaxDx4YkK5mNKWSkBKkg8yDzqUod4F6vf4MSW7aDUZA5aMKRons' //berkeley30
         );
 
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
@@ -137,9 +137,9 @@ export default function Home() {
   }, [state.hasBeenSetup]);
 
   // -------------------------------------------------------
-  // Send a transaction
+  // Update the hashes
 
-  const onSendTransaction = async () => {
+  const onUpdateHashes = async () => {
     setState({ ...state, creatingTransaction: true });
 
     setDisplayText('Retrieving data from oracle...');
@@ -150,13 +150,13 @@ export default function Home() {
       `https://cpone-oracle-aa6cba0bb20a.herokuapp.com/getLatestTweet/${endorserUsername}`
     );
     const data = await response.json();
-    const nftHash = Field(data.signedData.nftPoseidonHash);
-    const endorserHash = Field(data.signedData.endorserHash);
-    const signature = Signature.fromJSON(data.signature);
+    const oracleNftHash = data.signedData.nftPoseidonHash;
+    const oracleEndorserHash = data.signedData.endorserHash;
+    const oracleSignature = data.signature;
 
-    console.log(`nftHash: ${nftHash}`);
-    console.log(`endorserHash: ${endorserHash}`);
-    console.log(`signature: ${signature}`);
+    console.log(`nftHash: ${oracleNftHash}`);
+    console.log(`endorserHash: ${oracleEndorserHash}`);
+    console.log(`signature: ${oracleSignature}`);
 
     setDisplayText('Verifying NFT endorsement...');
     console.log('Verifying NFT endorsement...');
@@ -165,16 +165,115 @@ export default function Home() {
       publicKey: state.publicKey!,
     });
 
-    // await state.zkappWorkerClient!.createVerifyTransaction(nftHash, endorserHash, signature);
-
-    await state.zkappWorkerClient!.createUpdateNftHashTransaction();
+    await state.zkappWorkerClient!.createUpdateHashesTransaction(oracleNftHash, oracleEndorserHash);
 
     setDisplayText('Creating proof...');
     console.log('Creating proof...');
-    // await state.zkappWorkerClient!.proveVerifyTransaction();
-    await state.zkappWorkerClient!.proveUpdateNftHashTransaction();
+    await state.zkappWorkerClient!.createProveTransaction();
 
-    
+
+    console.log('Requesting send transaction...');
+    setDisplayText('Requesting send transaction...');
+    const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
+
+    setDisplayText('Getting transaction JSON...');
+    console.log('Getting transaction JSON...');
+    const { hash } = await (window as any).mina.sendTransaction({
+      transaction: transactionJSON,
+      feePayer: {
+        fee: transactionFee,
+        memo: '',
+      },
+    });
+
+    const transactionLink = `https://berkeley.minaexplorer.com/transaction/${hash}`;
+    console.log(`View transaction at ${transactionLink}`);
+
+    setTransactionLink(transactionLink);
+    setDisplayText(transactionLink);
+
+    setState({ ...state, creatingTransaction: false });
+  };
+
+// -------------------------------------------------------
+  // Verify the endorsement
+
+const onVerifyEndorsement = async () => {
+    setState({ ...state, creatingTransaction: true });
+
+    setDisplayText('Retrieving data from oracle...');
+    console.log('Retrieving data from oracle...');
+
+    const endorserUsername = 'mathy782'; // TODO: Replace hardcoded value with input from UI
+    const response = await fetch(
+      `https://cpone-oracle-aa6cba0bb20a.herokuapp.com/getLatestTweet/${endorserUsername}`
+    );
+    const data = await response.json();
+    const oracleNftHash = data.signedData.nftPoseidonHash;
+    const oracleEndorserHash = data.signedData.endorserHash;
+    const oracleSignature = data.signature;
+
+    console.log(`nftHash: ${oracleNftHash}`);
+    console.log(`endorserHash: ${oracleEndorserHash}`);
+    console.log(`signature: ${oracleSignature}`);
+
+    setDisplayText('Verifying NFT endorsement...');
+    console.log('Verifying NFT endorsement...');
+
+    await state.zkappWorkerClient!.fetchAccount({
+      publicKey: state.publicKey!,
+    });
+
+    await state.zkappWorkerClient!.createVerifyTransaction(oracleNftHash, oracleEndorserHash, oracleSignature);
+
+    setDisplayText('Creating proof...');
+    console.log('Creating proof...');
+    await state.zkappWorkerClient!.createProveTransaction();
+
+
+    console.log('Requesting send transaction...');
+    setDisplayText('Requesting send transaction...');
+    const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
+
+    setDisplayText('Getting transaction JSON...');
+    console.log('Getting transaction JSON...');
+    const { hash } = await (window as any).mina.sendTransaction({
+      transaction: transactionJSON,
+      feePayer: {
+        fee: transactionFee,
+        memo: '',
+      },
+    });
+
+    const transactionLink = `https://berkeley.minaexplorer.com/transaction/${hash}`;
+    console.log(`View transaction at ${transactionLink}`);
+
+    setTransactionLink(transactionLink);
+    setDisplayText(transactionLink);
+
+    setState({ ...state, creatingTransaction: false });
+  };
+
+  // -------------------------------------------------------
+  // Attempt to reset isEndorsed flag
+
+  const onResetFlag = async () => {
+    setState({ ...state, creatingTransaction: true });
+
+    setDisplayText('Attempting to reset isEndorsed flag...');
+    console.log('Attempting to reset isEndorsed flag...');
+
+    await state.zkappWorkerClient!.fetchAccount({
+      publicKey: state.publicKey!,
+    });
+
+    await state.zkappWorkerClient!.createAttemptedUpdateIsEndorsedTransaction();
+
+    setDisplayText('Creating proof...');
+    console.log('Creating proof...');
+    await state.zkappWorkerClient!.createProveTransaction();
+
+
     console.log('Requesting send transaction...');
     setDisplayText('Requesting send transaction...');
     const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
@@ -223,6 +322,9 @@ export default function Home() {
     const currentOraclePublicKey = await state.zkappWorkerClient!.getOraclePublicKey();
     console.log(`Oracle public key:`);
     console.log(currentOraclePublicKey);
+
+    // const events = await state.zkappWorkerClient!.getEvents();
+    // console.log(events);
 
 
     setDisplayText('');
@@ -287,10 +389,24 @@ export default function Home() {
         </div>
         <button
           className={styles.card}
-          onClick={onSendTransaction}
+          onClick={onUpdateHashes}
           disabled={state.creatingTransaction}
         >
-          Send Transaction
+          Set nftHash and endorserHash 
+        </button>
+        <button
+          className={styles.card}
+          onClick={onVerifyEndorsement}
+          disabled={state.creatingTransaction}
+        >
+          Verify Endorsement
+        </button>
+        <button
+          className={styles.card}
+          onClick={onResetFlag}
+          disabled={state.creatingTransaction}
+        >
+          Attempt to Reset isEndorsed flag
         </button>
         <button className={styles.card} onClick={onRefreshCurrentValue}>
           Get Latest State

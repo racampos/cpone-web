@@ -21,9 +21,7 @@ export default class ZkappWorkerClient {
     return this._call('compileContract', {});
   }
 
-  fetchAccount({
-    publicKey,
-  }: {
+  fetchAccount({publicKey}: {
     publicKey: PublicKey;
   }): ReturnType<typeof fetchAccount> {
     const result = this._call('fetchAccount', {
@@ -33,9 +31,7 @@ export default class ZkappWorkerClient {
   }
 
   initZkappInstance(publicKey: PublicKey) {
-    return this._call('initZkappInstance', {
-      publicKey58: publicKey.toBase58(),
-    });
+    return this._call('initZkappInstance', { publicKey58: publicKey.toBase58() });
   }
 
   async getNftHash(): Promise<Field> {
@@ -58,34 +54,32 @@ export default class ZkappWorkerClient {
     return Bool.fromJSON(JSON.parse(result as string));
   }
 
-  createUpdateNftHashTransaction() {
-    return this._call('createUpdateNftHashTransaction', {});
+  createUpdateHashesTransaction(nftHash: string, endorserHash: string) {
+    return this._call('createUpdateHashesTransaction', { nftHash: nftHash, endorserHash: endorserHash });
   }
 
-  createUpdateEndorserHashTransaction() {
-    return this._call('createUpdateNftHashTransaction', {});
+  createVerifyTransaction(oracleNftHash: string, oracleEndorserHash: string, oracleSignature: string) {
+    return this._call('createVerifyTransaction', { nftHash: oracleNftHash, endorserHash: oracleEndorserHash, signature: oracleSignature });
   }
 
-  proveUpdateNftHashTransaction() {
-    return this._call('proveUpdateEndorserHashTransaction', {});
+  createAttemptedUpdateIsEndorsedTransaction() {
+    return this._call('createAttemptedUpdateIsEndorsedTransaction', {});
   }
 
-  proveUpdateEndorserHashTransaction() {
-    return this._call('proveUpdateEndorserHashTransaction', {});
-  }
-
-  createVerifyTransaction(nftHash: Field, endorserHash: Field, signature: Signature) {
-    return this._call('createVerifyTransaction', { nftHash, endorserHash, signature });
-  }
-
-  proveVerifyTransaction() {
-    return this._call('proveVerifyTransaction', {});
+  createProveTransaction() {
+    return this._call('createProveTransaction', {});
   }
 
   async getTransactionJSON() {
     const result = await this._call('getTransactionJSON', {});
     return result;
   }
+
+  async getEvents(): Promise<String> {
+    const result = await this._call('getEvents', {});
+    return result as string;
+  }
+
 
   // ---------------------------------------------------------------------------------------
 
